@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+.col-md-3 {
+    flex: 0 0 25%;
+    max-width: 25%;
+  }
+
+blockquote cite {
+    color: #999999;
+    font-size: 14px;
+    display: block;
+    margin-top: 5px;
+}
+
+blockquote {
+    font-family: Georgia, serif;
+    font-size: 18px;
+    font-style: italic;
+    width: 500px;
+    margin: 1em 55em;
+    padding: 0.25em 40px;
+    line-height: 1.45;
+    position: relative;
+    color: #383838;
+}
+
+cite:before {
+   content: "\2014 \2009";
+}
+
+question{
+    font-size: 80px;
+    font-family: Georgia, serif;
+    font-size: 18px;
+    font-weight: bolder;
+}
+
+blockquote:before {
+    display: block;
+    content: "\201C";
+    font-size: 80px;
+    position: absolute;
+    left: -20px;
+    top: -20px;
+    color: #7a7a7a;
+}
+
+.node {
+  font: 300 11px "Helvetica Neue", Helvetica, Arial, sans-serif;
+  fill: #6c4e97;
+}
+
+.node:hover {
+  fill: #d5855a;
+}
+
+.node {
+  font: 300 11px "Helvetica Neue", Helvetica, Arial, sans-serif;
+  fill: #6c4e97;
+}
+
+.node:hover {
+  fill: steelblue;
+}
+
+.link {
+  stroke: grey;
+  stroke-opacity: 0.4;
+  fill: none;
+  pointer-events: none;
+}
+
+.node:hover,
+.node--source,
+.node--target {
+  font-weight: 700;
+}
+
+.node--source {
+  fill: #2ca02c;
+}
+
+.node--target {
+  fill: #d62728;
+}
+
+.link--source,
+.link--target {
+  stroke-opacity: 1;
+  stroke-width: 2px;
+}
+
+.link--source {
+  stroke: steelblue;
+}
+
+.link--target {
+  stroke: #2ca02c;
+}
+
+.Aligner {
+  display: flex;
+  align-items: center;
+  min-height: 24em;
+  justify-content: center;
+}
+
+.Aligner-item {
+  flex: 1;
+}
+
+.Aligner-item--top {
+  align-self: flex-start;
+}
+
+.Aligner-item--bottom {
+  align-self: flex-end;
+}
+
+.Aligner-item--fixed {
+  flex: none;
+  max-width: 50%;
+}
+
+.main{
+	text-align: center;
+	background-color: #fff;
+	border-radius: 20px;
+	width: 1000px;
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	transform: translate(-50%,-50%);
+}
+
+</style>
+<body>
+<div id="hotmap" class="main" style= "background: #FBF9EB; text-align:auto;">
+
+</div>
+<script src="https://d3js.org/d3.v4.min.js"></script>
+<script src="http://code.jquery.com/jquery-1.6.min.js"></script>
+<script>
+
+//d3 = require("d3@4")
+var diameter = 1000,
+    radius = diameter / 2,
+    innerRadius = radius - 120;
+
+var cluster = d3.cluster()
+    .size([360, innerRadius]);
+
+var line = d3.radialLine()
+    .curve(d3.curveBundle.beta(0.85))
+    .radius(function(d) { return d.y; })
+    .angle(function(d) { return d.x / 180 * Math.PI; });
+
+var svg = d3.select("#hotmap").append("svg")
+    .attr("width", diameter)
+    .attr("height", diameter)
+  .append("g")
+    .attr("transform", "translate(" + radius + "," + radius + ")");
+
+var link = svg.append("g").selectAll(".link"),
+    node = svg.append("g").selectAll(".node");
+
+var argo_list = [
+    "Adolfo Suárez Madrid–Barajas Airport", "Amsterdam Airport Schiphol", "Aérodrome de Belle Île", "Leverkusen Airport", "Enghien Moisselles Airfield", 'Melilla Airport', "Bunge Private Airport", "Düsseldorf Airport", "London Stansted Airport", "Mönchengladbach Airport", "Charles de Gaulle International Airport", "Hamburg Helmut Schmidt Airport", "Thisted Airport", "Hunsdon Airfield", "Essen Mulheim Airport", "Oslo Airport, Gardermoen", "Großes Moor Airfield", "Little Chase Farm Airstrip", "Frankfurt am Main Airport",
+    "Berlin Brandenburg Airport", "Meiersberg Airfield", "Paris-Le Bourget Airport", "Cologne Bonn Airport", "Saint-Yan Airport", "EuroAirport Basel-Mulhouse-Freiburg Airport", "Corvo Airport", "Flores Airport", "Trøgstad Airfield", "Flugplatz Merseburg"]
+
+var datastore = new Object();
+
+for(var i = 0; i < argo_list.length; i++){
+      datastore[argo_list[i]] = "#d5855a";
+}
+
+var datalink;
+//$.getJSON("https://github.com/YimingXu1/ML-Diary/tree/master/data/airports_link.json", function(error, classes){
+//d3.json("https://github.com/LSDE-Group16/Air-Cargo/blob/main/data/airports_link.json", function(error, classes) {
+$.getJSON("./data/airports_link.json", function(classes) {
+
+  //if (error) throw error;
+
+  var root = packageHierarchy(classes)
+      .sum(function(d) { return d.size; });
+
+  cluster(root);
+  datalink =packageImports(root.leaves());
+
+  link = link
+    .data(packageImports(root.leaves()))
+    .enter().append("path")
+      .each(function(d) { d.source = d[0], d.target = d[d.length - 1]; })
+      .attr("class", "link")
+      .attr("d", line);
+
+  node = node
+    .data(root.leaves())
+    .enter().append("text")
+      .attr("class", "node")
+      .attr("dy", "0.31em")
+      .attr("transform", function(d) { return "rotate(" + (d.x - 90) + ")translate(" + (d.y + 8) + ",0)" + (d.x < 180 ? "" : "rotate(180)"); })
+      .attr("text-anchor", function(d) { return d.x < 180 ? "start" : "end"; })
+      .text(function(d) { return d.data.key; })
+      .attr("stroke", function(d){return datastore[d.data.key]})
+      .on("mouseover", mouseovered)
+      .on("mouseout", mouseouted);
+});
+
+function mouseovered(d) {
+  console.log(datalink);
+  console.log(d);
+  node
+      .each(function(n) { n.target = n.source = false; });
+
+  link
+      .classed("link--target", function(l) { if (l.target === d) return l.source.source = true; })
+      .classed("link--source", function(l) { if (l.source === d) return l.target.target = true; })
+    .filter(function(l) { return l.target === d || l.source === d; })
+      .raise();
+
+  node
+      .classed("node--target", function(n) { return n.target; })
+      .classed("node--source", function(n) { return n.source; });
+}
+
+function mouseouted(d) {
+  link
+      .classed("link--target", false)
+      .classed("link--source", false);
+
+  node
+      .classed("node--target", false)
+      .classed("node--source", false);
+}
+
+// Lazily construct the package hierarchy from class names.
+function packageHierarchy(classes) {
+  var map = {};
+
+  function find(name, data) {
+    var node = map[name], i;
+    if (!node) {
+      node = map[name] = data || {name: name, children: []};
+      if (name.length) {
+        node.parent = find(name.substring(0, i = name.lastIndexOf(".")));
+        node.parent.children.push(node);
+        node.key = name.substring(i + 1);
+      }
+    }
+    return node;
+  }
+
+  classes.forEach(function(d) {
+    find(d.name, d);
+  });
+
+  return d3.hierarchy(map[""]);
+}
+
+// Return a list of imports for the given array of nodes.
+function packageImports(nodes) {
+  var map = {},
+      imports = [];
+
+  // Compute a map from name to node.
+  nodes.forEach(function(d) {
+    map[d.data.name] = d;
+  });
+
+  // For each import, construct a link from the source to target node.
+  nodes.forEach(function(d) {
+    if (d.data.imports) d.data.imports.forEach(function(i) {
+      imports.push(map[d.data.name].path(map[i]));
+    });
+  });
+
+  return imports;
+}
+
+</script>
+
+</body>

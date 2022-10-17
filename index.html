@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+
+<head>
+  <meta charset="utf-8">
+  <script src="https://cdn.jsdelivr.net/npm/vega@5.17.0"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vega-lite@4.17.0"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vega-embed@6.12.2"></script>
+  <script src="https://d3js.org/d3.v6.min.js"></script>
+  <script src="http://code.jquery.com/jquery-1.6.min.js"></script>
+
+
+  <style>
+    p.hidden {border-style:hidden;}
+    body {
+      font-family:"avenir next", Arial, sans-serif;
+      font-size: 12px;
+      color: #696969;
+      margin:0;
+      padding:0;
+      width:100%;
+    }
+
+
+    h2 .red-text {
+      color: red;
+      text-align:center;
+      font-size: 42px;
+    }
+
+
+    .page-section h2.section-heading {
+      font-size: 2.5rem;
+      margin-top: 0;
+      margin-bottom: 1rem;
+      }
+
+    #play-button {
+      position: absolute;
+      top: 400px;
+      left: 10px;
+      background: #f08080;
+      padding-right: 26px;
+      border-radius: 3px;
+      border: none;
+      color: white;
+      margin: 410px 0px;
+      padding: 0 12px;
+      width: 60px;
+      cursor: pointer;
+      height: 30px;
+    }
+
+    #play-button2 {
+      position: absolute;
+      top: 1600px;
+      left: 10px;
+      background: #f08080;
+      padding-right: 26px;
+      border-radius: 3px;
+      border: none;
+      color: white;
+      margin: 410px 0px;
+      padding: 0 12px;
+      width: 60px;
+      cursor: pointer;
+      height: 30px;
+    }
+
+    #play-button:hover {
+      background-color: #696969;
+    }
+
+    #play-button2:hover {
+      background-color: #696969;
+    }
+
+    .ticks {
+      font-size: 10px;
+    }
+
+    .track,
+    .track-inset,
+    .track-overlay {
+      stroke-linecap: round;
+    }
+
+    .track {
+      stroke: #000;
+      stroke-opacity: 0.3;
+      stroke-width: 10px;
+    }
+
+    .track-inset {
+      stroke: #dcdcdc;
+      stroke-width: 8px;
+    }
+
+    .track-overlay {
+      pointer-events: stroke;
+      stroke-width: 50px;
+      stroke: transparent;
+      cursor: crosshair;
+    }
+
+    .handle {
+      fill: #fff;
+      stroke: #000;
+      stroke-opacity: 0.5;
+      stroke-width: 1.25px;
+    }
+
+    .ticks2 {
+      font-size: 10px;
+    }
+
+    .track2,
+    .track-inset2,
+    .track-overlay2 {
+      stroke-linecap: round;
+    }
+
+    .track2 {
+      stroke: #000;
+      stroke-opacity: 0.3;
+      stroke-width: 10px;
+    }
+
+    .track-inset2 {
+      stroke: #ddd;
+      stroke-width: 8px;
+    }
+
+    .track-overlay2 {
+      pointer-events: stroke;
+      stroke-width: 50px;
+      stroke: transparent;
+      cursor: crosshair;
+    }
+
+    .handle2 {
+      fill: #fff;
+      stroke: #000;
+      stroke-opacity: 0.5;
+      stroke-width: 1.25px;
+    }
+
+    .country {
+      fill: #EEE;
+      stroke: #BBB;
+      vector-effect: non-scaling-stroke;
+    }
+
+    .lake {
+      fill: #bcd1f1;
+      stroke: none;
+    }
+
+    .river {
+      fill: none;
+      stroke: #bcd1f1;
+      vector-effect: non-scaling-stroke;
+    }
+
+    .container{
+      height: 80%;
+      width: 80%;
+    }
+
+
+
+    div.tooltip {
+      position: absolute;
+      text-align: center;
+      padding: 5px;
+      font: 12px sans-serif;
+      background: white;
+      border: solid;
+      border-radius: 5px;
+      border-width: 2px;
+      pointer-events: none;
+    }
+
+    #all {
+      width: 1200;
+    }
+
+    #rightCol {
+      float:right;
+      font-family: sans-serif;
+    }
+
+    #footer {
+      font-size:10pt;
+    }
+
+    #cmds {
+      margin-top:.5em;
+      font-family: sans-serif;
+    }
+
+    #info {
+        margin-top:1em;
+        height:1em;
+        font-family: monospace;
+      }
+
+    #hotmap {
+      margin:0 auto;
+    }
+
+    svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+      border:1px solid #DDD;
+      margin-left: auto;
+      margin-right: auto;
+      text-align:center;
+    }
+
+
+
+  </style>
+</head>
+
+<body onload="createViz()" style="background-color: #F5F5F5;">
+  <div id="all" style=" width:100%;border:none; margin:0 auto; ">
+      <div id="rightCol" style="border:none;">
+          <div id="inTheAir"></div>
+          <div id="alt"></div>
+      </div>
+      <div id="main" style="width:100%; margin:0 auto;   background: #F5F5F5; border:none;">
+
+      </div>
+      <div id="info"></div>
+      <div id="altitude"></div>
+
+      <div id="vis" style="width:100%; background: #F5F5F5; border:none;">
+      </div>
+      <button id="play-button">RUN</button>
+
+  </div>
+  <div id ="charts" style= "width:100%; height:100%; background: #F5F5F5; border:none;">
+
+      <div id = "vegachart" style="width:600px; height:100%; background: #F5F5F5; border:none;">
+      </div>
+
+
+      <div id = "cargo" style="width:600px; height:100%; background: #F5F5F5; border:none;">
+      </div>
+
+  </div>
+
+  <div id="cargoports" style= "background-color: #FBF9EB; text-align:auto;">
+      <h2 style="text-align:center; color:black; font-size: 52px;">CARGO TRANSPORTS CONNECTION GRAPH</h2>
+
+
+      <object style="border:0px" type="text/x-scriptlet" data="cargoairports.html" width=100% height=1000>
+      </object>
+
+  </div>
+
+
+  <div id="hotmap" style= "background: #F5F5F5; text-align:auto;">
+      <h2 style="text-align:center; color:black; font-size: 52px;">TRANSPORT VOLUME OF AIRPORTS</h2>
+
+
+    <object style="border:0px" type="text/x-scriptlet" data="volume.html" width=49.5% height=1000>
+    </object>
+    <object style="border:0px" type="text/x-scriptlet" data="volume17.html" width=49.5% height=1000>
+    </object>
+
+  </div>
+
+  <div id="slider2"></div>
+
+
+
+
+      <script type="text/javascript" src="js/index.js"></script>
+
+</body>
